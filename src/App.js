@@ -1,12 +1,8 @@
-import './App.css';
-import SearchBar from './components/SearchBar';
-
+import "./App.css";
+import SearchBar from "./components/SearchBar";
 
 function App() {
-
-  return (
-    <SearchBar></SearchBar>
-  );
+  return <SearchBar />;
 }
 
 export default App;

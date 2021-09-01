@@ -1,90 +1,75 @@
-import React, {useState} from 'react'
-import axios from 'axios'
-import 'antd/dist/antd.css'
-import {Table, Image, Input} from 'antd'
+import { useState } from "react";
+import axios from "axios";
 
+import { Table, Input, Pagination } from "antd";
+import { Error } from "./Error";
+
+import columns from "../utils/columns";
+
+import "antd/dist/antd.css";
 
 const Searchbar = () => {
-    const [inputValue, setInputValue] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(false);
-    const [users, setUsers] = useState([]);
-    const [showTable, setShowTable] = useState(false);
-    const {Search} = Input;
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [countPage, setCountPage] = useState(1);
+  const [error, setError] = useState(false);
+  const [users, setUsers] = useState([]);
+  const { Search } = Input;
 
-    const columns = [
-        {
-            key:"1",
-            title:"Avatar",
-            dataIndex: 'avatar_url',
-            render:(image)=><Image src={image} width={100}/>
-        },
-        {
-            key:"2",
-            title:"Login",
-            dataIndex: 'login',
-            sorter: (a, b)=> {return a.login.length - b.login.length || a.login.localeCompare(b.login)},
-        },
-        {
-            key:"3",
-            title:"Type",
-            dataIndex: "type",
-            filters: [
-                {text: 'User', value: 'User'},
-                {text: 'Organization', value: 'Organization'}        
-            ],
-            onFilter: (value, record) => record.type.includes(value),
-        },
-    ]
+  const dataSource = users.map((item) => ({ ...item, key: item.id }));
 
-    const dataSource = users.map(item =>({...item, key: item.id}))
-
-    const handleClick = () => {
-        setIsLoading(true);
-        try {
-            axios.get("https://api.github.com/search/users?q=" + inputValue +"in:login")
-            .then(response => {
-                console.log(response);
-                setIsLoading(false)
-                setUsers(response.data.items)
-                setShowTable(true);
-        })
-        } catch (error) {
-            setIsLoading(false);
-            setError(true);
-            console.error(error);
-        };
+  const onSearch = (page) => {
+    setPage(page);
+    setIsLoading(true);
+    try {
+      axios
+        .get(
+          `https://api.github.com/search/users?page=${page}&per_page=9&q=${inputValue}in:login`
+        )
+        .then((response) => {
+          setIsLoading(false);
+          setUsers(response.data.items);
+          console.log(response);
+          setCountPage(Math.ceil(response.data.total_count / 9));
+        });
+    } catch (error) {
+      setIsLoading(false);
+      setError(error);
     }
-
-    return (
+  };
+  return (
     <>
-        <Search
-            placeholder="Search Github Repositories"
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
+      <Search
+        placeholder="Search Github Repositories"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        loading={isLoading}
+        enterButton="Submit"
+        size="large"
+        onSearch={() => onSearch(1)}
+      />
+
+      {error && <Error error={error} />}
+
+      {!!users.length && (
+        <>
+          <Table
             loading={isLoading}
-            enterButton="Submit"
-            size="large"
-            onSearch={handleClick}
+            columns={columns}
+            dataSource={dataSource}
+            pagination={false}
           />
-
-      {error && (
-        <div>
-          Unexpected Error Occurred fetching data. Please try again later!
-        </div>
+          <Pagination
+            current={page}
+            defaultCurrent={1}
+            total={countPage}
+            onChange={onSearch}
+          />
+        </>
       )}
-        {showTable && 
-            <Table
-                showTable={showTable}
-                loading={isLoading}
-                columns={columns}
-                dataSource={dataSource}
-                pagination={{        
-                    pageSize:"9",
-            }}/>
-        }
     </>
-    )
-}
+  );
+};
 
-export default Searchbar
+export default Searchbar;
