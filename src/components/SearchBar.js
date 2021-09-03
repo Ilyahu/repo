@@ -38,16 +38,20 @@ const Searchbar = () => {
       setError(error);
     }
   };
+
+  const onSearchSubmit = () => onSearch(1);
+  const onInputValueChange = (e) => setInputValue(e.target.value);
+
   return (
     <>
       <Search
         placeholder="Search Github Repositories"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={onInputValueChange}
         loading={isLoading}
         enterButton="Submit"
         size="large"
-        onSearch={() => onSearch(1)}
+        onSearch={onSearchSubmit}
       />
 
       {error && <Error error={error} />}
