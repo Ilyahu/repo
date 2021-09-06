@@ -1,37 +1,33 @@
 import { useState } from "react";
-import axios from "axios";
-
-import { Table, Input, Pagination } from "antd";
+import { Table, Input } from "antd";
 import { Error } from "./Error";
 
 import columns from "../utils/columns";
 
 import "antd/dist/antd.css";
+import { client } from "../utils/client";
 
 const Searchbar = () => {
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [countPage, setCountPage] = useState(1);
   const [error, setError] = useState(false);
   const [users, setUsers] = useState([]);
   const { Search } = Input;
 
-  const dataSource = users.map((item) => ({ ...item, key: item.id }));
+  const dataSource = users.map((item) => ({ ...item, key: item.sys.id }));
 
-  const onSearch = (page) => {
-    setPage(page);
+  const onSearch = () => {
     setIsLoading(true);
     try {
-      axios
-        .get(
-          `https://api.github.com/search/users?page=${page}&per_page=9&q=${inputValue}in:login`
-        )
+      client
+        .getEntries({
+          content_type: "users",
+          "fields.login[match]": `${inputValue}`,
+        })
         .then((response) => {
-          setIsLoading(false);
-          setUsers(response.data.items);
           console.log(response);
-          setCountPage(Math.ceil(response.data.total_count / 9));
+          setIsLoading(false);
+          setUsers(response.items);
         });
     } catch (error) {
       setIsLoading(false);
@@ -62,13 +58,7 @@ const Searchbar = () => {
             loading={isLoading}
             columns={columns}
             dataSource={dataSource}
-            pagination={false}
-          />
-          <Pagination
-            current={page}
-            defaultCurrent={1}
-            total={countPage}
-            onChange={onSearch}
+            pagination={true}
           />
         </>
       )}
